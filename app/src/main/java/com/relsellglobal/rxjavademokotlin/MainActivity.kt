@@ -3,16 +3,21 @@ package com.relsellglobal.rxjavademokotlin
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.relsellglobal.rxjavademokotlin.network.MyHttpRequests
 import com.relsellglobal.rxjavademokotlin.pojo.Task
 import com.relsellglobal.rxjavademokotlin.util.StringUtilM
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Observer
+import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 
 
 class MainActivity : AppCompatActivity() {
+
+    var disposable = CompositeDisposable()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -55,11 +60,51 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onSubscribe(d: Disposable) {
+                disposable.add(d)
+            }
+
+        })
+
+        var t = Thread {
+            var i = 0
+            while(i < 5) {
+                println("next")
+                i++
+            }
+        }
+        t.start()
+
+        MyHttpRequests.triggerGetRequest()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : Observer<String>{
+            override fun onSubscribe(d: Disposable) {
+
+            }
+
+            override fun onNext(t: String) {
+                println(t)
+            }
+
+            override fun onError(e: Throwable) {
+
+            }
+
+            override fun onComplete() {
 
             }
 
         })
 
 
+
+
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        disposable.clear()  /// clear without disposable from active
+        // disposable.dispose()
     }
 }
